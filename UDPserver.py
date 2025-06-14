@@ -41,3 +41,39 @@ class UDPServer:
             except Exception as e:
                 print(f"Error in main server loop: {e}")
                  
+    def handle_file_transfer(self, filename, client_address, data_port):
+        try:
+            # Create new socket for this file transfer
+            transfer_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            transfer_socket.bind(('', data_port))
+            print(f"Thread started for {filename} on port {data_port}")
+
+            with open(filename, 'rb') as file:
+                while True:
+                    data, client_addr = transfer_socket.recvfrom(1024)
+                    request = data.decode().strip()
+                    parts = request.split()
+
+                    if parts[0] == "FILE" and parts[2] == "CLOSE":
+                        response = f"FILE {filename} CLOSE_OK"
+                        transfer_socket.sendto(response.encode(), client_addr)
+                        break
+
+                    if parts[0] == "FILE" and parts[2] == "GET":
+                        try:
+                            start = int(parts[4])
+                            end = int(parts[6])
+                            file.seek(start)
+                            chunk = file.read(end - start + 1)
+                            base64_data = base64.b64encode(chunk).decode()
+                            response = f"FILE {filename} OK START {start} END {end} DATA {base64_data}"
+                            transfer_socket.sendto(response.encode(), client_addr)
+                        except Exception as e:
+                            print(f"Error processing file chunk: {e}")
+                            continue
+
+            transfer_socket.close()
+            print(f"Transfer complete for {filename}")
+
+        except Exception as e:
+            print(f"Error in file transfer thread: {e}")
