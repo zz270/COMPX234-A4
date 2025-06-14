@@ -115,3 +115,15 @@ def start(self):
             print(f"Error: {e}")
         finally:
             self.socket.close()
+ 
+if __name__ == "__main__":
+    if len(sys.argv) != 4:
+        print("Usage: python UDPclient.py <hostname> <port> <file_list>")
+        sys.exit(1)
+    
+    hostname = sys.argv[1]
+    port = int(sys.argv[2])
+    file_list = sys.argv[3]
+    
+    client = UDPClient(hostname, port, file_list)
+    client.start()
